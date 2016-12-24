@@ -20,7 +20,7 @@ namespace nimpass
     {
         public int Pile { get; set; }
         public int Number { get; set; }
-        public override string ToString() => $"({Pile} {Number}";
+        public override string ToString() => $"({Pile} {Number})";
     }
 
     class Board
