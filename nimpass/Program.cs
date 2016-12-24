@@ -89,11 +89,10 @@ namespace nimpass
                     continue;
                 }
 
-                var pile = int.Parse(match.Groups[1].Value);
-                var num = int.Parse(match.Groups[2].Value);
-
                 try
                 {
+                    var pile = int.Parse(match.Groups[1].Value);
+                    var num = int.Parse(match.Groups[2].Value);
                     board = board.Move(new Move { Pile = pile, Number = num }, "YOU");
                 }
                 catch(Exception ex)
