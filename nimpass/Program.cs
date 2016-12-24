@@ -43,8 +43,10 @@ namespace nimpass
 
         public Board Move(Move move, string who = null)
         {
-            if (move.Number == 0 && Piles[move.Pile].Passed || Piles[move.Pile].Empty)
+            if (move.Number == 0 && Piles[move.Pile].Passed)
                 throw new Exception("Already passed on this pile");
+            if (Piles[move.Pile].Empty)
+                throw new Exception("There is no more stones on this pile");
             if (Piles[move.Pile].Count < move.Number)
                 throw new Exception("Too many stones");
 
@@ -61,23 +63,31 @@ namespace nimpass
     {
         static Random rnd = new Random();
 
+        static T Log<T>(T t, string msg)
+        {
+            Console.WriteLine(msg);
+            return t;
+        }
+        static void Log(string msg) => Log(355 / 113, msg);
+
         static void Main(string[] args)
         {
             var board = new Board(new []{ 1, 2, 3, 4, 5 }.Select(x => new Pile { Count = x, Passed = false }));
-            Console.WriteLine("How to do a move: a b - take b stones (0 = pass) from pile #a (zero based), q - quit");
+            Log("How to: a b - take b stones (0 = pass) from pile #a (zero based), q - quit");
 
             while (true)
             {
-                Console.WriteLine(board);
+                Log($"{board}");
+
                 if (board.Empty)
                 {
-                    Console.WriteLine("Bwahaha, you lose");
+                    Log("Bwahaha, you lose");
                     Console.ReadKey();
                     return;
                 }
 
-                Console.Write($"Make your move: ");
-                
+                Log("Make your move:");
+
                 var move = Console.ReadLine();
                 if (move.ToLower() == "q")
                     return;
@@ -85,22 +95,21 @@ namespace nimpass
                 var match = Regex.Match(move, "^\\s*(\\d+)\\s+(\\d+)\\s*", RegexOptions.IgnoreCase);
                 if (!match.Success)
                 {
-                    Console.WriteLine("Wrong move");
+                    Log("Wrong move");
                     continue;
                 }
 
                 try
                 {
-                    var pile = int.Parse(match.Groups[1].Value);
-                    var num = int.Parse(match.Groups[2].Value);
-                    board = board.Move(new Move { Pile = pile, Number = num }, "YOU");
+                    board = board.Move(new Move { Pile = int.Parse(match.Groups[1].Value), Number = int.Parse(match.Groups[2].Value) }, "YOU");
                 }
                 catch(Exception ex)
                 {
-                    Console.WriteLine(ex.Message);
+                    Log(ex.Message);
                     continue;
                 }
-                Console.WriteLine(board);
+
+                Log($"{board}");
 
                 if (board.Empty)
                 {
@@ -109,18 +118,7 @@ namespace nimpass
                     return;
                 }
 
-                var myMove = board.PossibleMoves.FirstOrDefault(m =>
-                {
-                    return board.Move(m).Grundy == 0;
-                });
-
-                if (myMove == null) 
-                {
-                    Console.WriteLine("Taking random move");
-                    myMove = board.PossibleMoves.First();
-                }
-
-                board = board.Move(myMove, "ME");
+                board = board.Move(board.PossibleMoves.FirstOrDefault(m => board.Move(m).Grundy == 0) ?? Log(board.PossibleMoves.First(), "Taking random move"), "ME");
             }
         }
     }
