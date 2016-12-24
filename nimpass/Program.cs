@@ -9,53 +9,75 @@ namespace nimpass
 {
     class Pile
     {
-        public int Count { get; set; }
-        public bool Passed { get; set; }
-        public override string ToString() => Passed || Empty ? $"{Count}" : $"[{Count}]";
+        private int count;
+        private bool passed;
+
+        public Pile(int count, bool passed = false)
+        {
+            this.count = count;
+            this.passed = passed;
+        }
+
+        public int Count => count;
+        public bool Passed => passed;
         public bool Empty => Count == 0;
-        public int ToInt => Count == 0 || Passed ? Count : Count + 1;
+        public int Grundy => Count == 0 || Passed ? Count : Count + 1;
+        public override string ToString() => Passed || Empty ? $"{Count}" : $"[{Count}]";
     }
 
     class Move
     {
-        public int Pile { get; set; }
-        public int Number { get; set; }
+        private int pile;
+        private int number;
+
+        public Move(int pile, int number)
+        {
+            this.pile = pile;
+            this.number = number;
+        }
+
+        public int Pile => pile;
+        public int Number => number;
         public override string ToString() => $"({Pile} {Number})";
     }
 
     class Board
     {
-        private List<Pile> piles;
-        public List<Pile> Piles => piles;
-        public int Grundy => piles.Aggregate(0, (x, y) => x ^ y.ToInt);
+        private IEnumerable<Pile> piles;
+
+        public Board(IEnumerable<Pile> piles)
+        {
+            this.piles = piles.Select(p => new Pile(p.Count, p.Passed));
+        }
+
+        public IEnumerable<Pile> Piles => piles;
+        public int Grundy => piles.Aggregate(0, (x, y) => x ^ y.Grundy);
         public bool Empty => piles.All(x => x.Empty);
         public override string ToString() => $"{string.Join(" ", piles.Select((x, i) => $"{i}.{x}"))} G={Grundy}";
         public IEnumerable<Move> PossibleMoves => piles.SelectMany((p, i) =>
         {
             IEnumerable<int> stones = p.Count == 0 ? Enumerable.Empty<int>() : p.Passed ? Enumerable.Range(1, p.Count) : Enumerable.Range(0, p.Count + 1);
-            return stones.Select(x => new Move { Pile = i, Number = x });
+            return stones.Select(x => new Move(i, x));
         });
 
-        public Board(IEnumerable<Pile> piles)
-        {
-            this.piles = new List<Pile>(piles.Select(p => new Pile { Count = p.Count, Passed = p.Passed }));
-        }
+
 
         public Board Move(Move move, string who = null)
         {
-            if (move.Number == 0 && Piles[move.Pile].Passed)
+            var pile = Piles.ElementAt(move.Pile);
+            if (move.Number == 0 && pile.Passed)
                 throw new Exception("Already passed on this pile");
-            if (Piles[move.Pile].Empty)
+            if (pile.Empty)
                 throw new Exception("There are no more stones on this pile");
-            if (Piles[move.Pile].Count < move.Number)
+            if (pile.Count < move.Number)
                 throw new Exception("Too many stones");
 
             if (!string.IsNullOrEmpty(who))
                 Console.WriteLine($"{who} removed {move.Number} from pile #{move.Pile}");
 
             return new Board(piles.Select((p, i) => i == move.Pile
-                ? new Pile { Count = p.Count - move.Number, Passed = move.Number == 0 || p.Passed }
-                : new Pile { Count = p.Count, Passed = p.Passed }));
+                ? new Pile(p.Count - move.Number, move.Number == 0 || p.Passed)
+                : new Pile(p.Count, p.Passed)));
         }
     }
 
@@ -72,7 +94,7 @@ namespace nimpass
 
         static void Main(string[] args)
         {
-            var board = new Board(new []{ 1, 2, 3, 4, 5 }.Select(x => new Pile { Count = x, Passed = false }));
+            var board = new Board(new []{ 1, 2, 3, 4, 5 }.Select(x => new Pile(x)));
             Log("How to: a b - take b stones (0 = pass) from pile #a (zero based), q - quit");
 
             while (true)
@@ -101,7 +123,7 @@ namespace nimpass
 
                 try
                 {
-                    board = board.Move(new Move { Pile = int.Parse(match.Groups[1].Value), Number = int.Parse(match.Groups[2].Value) }, "YOU");
+                    board = board.Move(new Move(int.Parse(match.Groups[1].Value), int.Parse(match.Groups[2].Value)), "YOU");
                 }
                 catch(Exception ex)
                 {
