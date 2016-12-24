@@ -46,7 +46,7 @@ namespace nimpass
             if (move.Number == 0 && Piles[move.Pile].Passed)
                 throw new Exception("Already passed on this pile");
             if (Piles[move.Pile].Empty)
-                throw new Exception("There is no more stones on this pile");
+                throw new Exception("There are no more stones on this pile");
             if (Piles[move.Pile].Count < move.Number)
                 throw new Exception("Too many stones");
 
