@@ -118,7 +118,8 @@ namespace nimpass
                     return;
                 }
 
-                board = board.Move(board.PossibleMoves.FirstOrDefault(m => board.Move(m).Grundy == 0) ?? Log(board.PossibleMoves.First(), "Taking random move"), "ME");
+                board = board.Move(board.PossibleMoves.FirstOrDefault(m => board.Move(m).Grundy == 0) ?? 
+                    Log(board.PossibleMoves.ElementAt(rnd.Next(board.PossibleMoves.Count())), "Taking random move"), "ME");
             }
         }
     }
